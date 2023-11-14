@@ -2,6 +2,34 @@
 
 `pkgforbid` is a linter for checking if a package imports a particular package.
 
+
+## Use cases
+
+### If you want to prohibit dependencies on internal packages
+
+```mermaid
+graph TD
+
+domain --> repository
+```
+
+### If you want to prohibit dependencies on standard libralies
+
+```mermaid
+graph TD
+
+domain --> net/http
+```
+
+### If you want to prohibit dependencies on standard libralies via  internal packages
+
+```mermaid
+graph TD
+
+domain --> util --> net/http
+```
+
+
 ## How to run
 
 ```

@@ -16,6 +16,8 @@ var (
 
 	ConfigFile *string
 
+	Dependencies map[string]map[string]bool
+
 	Analyzer = &analysis.Analyzer{
 		Name: "pkgforbid",
 		Doc:  "pkgforbid",
@@ -108,7 +110,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		fmt.Println("---")
 	}
 
-	if packageConfig, ok := appConfig.packageConfigs[pass.Pkg.Path()]; ok {
+	_run := func(packageConfig appPackageConfig, importerPackage string) {
 		for _, f := range pass.Files {
 			ast.Inspect(f, func(n ast.Node) bool {
 				if x, ok := n.(*ast.ImportSpec); ok {
@@ -117,13 +119,38 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					if _, ok := packageConfig.forbiddenPackages[importedPackage]; ok {
 						pass.Reportf(x.Pos(), "imported forbidden package: %s", importedPackage)
 					} else if appConfig.debug {
-						fmt.Printf("%s is not forbidden in %s\n", importedPackage, pass.Pkg.Path())
+						fmt.Printf("%s is not forbidden in %s\n", importedPackage, importerPackage)
+					}
+
+					path := fmt.Sprintf("%s,%s", importerPackage, importedPackage)
+					for dep := range Dependencies[path] {
+						if _, ok := packageConfig.forbiddenPackages[dep]; ok {
+							pass.Reportf(x.Pos(), "imported forbidden package: %s", dep)
+						} else if appConfig.debug {
+							fmt.Printf("%s is not forbidden in %s\n", dep, importerPackage)
+						}
 					}
 				}
 				return true
 			})
 		}
-	} else if appConfig.debug {
+	}
+
+	found := false
+
+	if packageConfig, ok := appConfig.packageConfigs[pass.Pkg.Path()]; ok {
+		found = true
+		_run(packageConfig, pass.Pkg.Path())
+	}
+
+	if pass.Pkg.Name() == "main" {
+		if packageConfig, ok := appConfig.packageConfigs[pass.Pkg.Name()]; ok {
+			found = true
+			_run(packageConfig, pass.Pkg.Name())
+		}
+	}
+
+	if !found && appConfig.debug {
 		fmt.Printf("config for %s is not found\n", pass.Pkg.Path())
 	}
 
