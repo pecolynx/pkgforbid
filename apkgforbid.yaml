@@ -13,4 +13,4 @@ packageConfigs:
     forbiddenPackages:
       # - time
       - json
-debug: false
+debug: true
