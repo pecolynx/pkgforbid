@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 
 	"golang.org/x/tools/go/analysis/singlechecker"
 	"golang.org/x/tools/go/packages"
@@ -54,22 +53,18 @@ func main() {
 	}
 	pkgs, err := packages.Load(conf, "./...")
 	if err != nil {
-		log.Fatalln("packages.Load:", err)
+		panic(err)
 	}
 
 	dependencyMap := make(map[string]map[string]bool)
 	for _, pkg := range pkgs {
 		dependencyMap[pkg.PkgPath] = make(map[string]bool)
-
-		fmt.Printf("  • %s, %s\n", pkg.Name, pkg.PkgPath)
 		for _, i := range pkg.Imports {
-			fmt.Printf("%s\n", i.PkgPath)
 			dependencyMap[pkg.PkgPath][i.PkgPath] = true
 		}
 		if pkg.Name == "main" {
 			dependencyMap[pkg.Name] = make(map[string]bool)
 			for _, i := range pkg.Imports {
-				fmt.Printf("%s\n", i.PkgPath)
 				dependencyMap[pkg.Name][i.PkgPath] = true
 			}
 		}
@@ -81,11 +76,11 @@ func main() {
 			panic(err)
 		}
 	}
-	for src, v := range dependencyList {
-		for dst := range v {
-			fmt.Printf("%s -> %s\n", src, dst)
-		}
-	}
+	// for src, v := range dependencyList {
+	// 	for dst := range v {
+	// 		fmt.Printf("%s -> %s\n", src, dst)
+	// 	}
+	// }
 
 	dependencies := make(map[string]map[string]bool)
 	for _, pkg := range pkgs {
@@ -107,11 +102,11 @@ func main() {
 		}
 	}
 
-	for src, v := range dependencies {
-		for dst := range v {
-			fmt.Printf("%s: %s\n", src, dst)
-		}
-	}
+	// for src, v := range dependencies {
+	// 	for dst := range v {
+	// 		fmt.Printf("%s: %s\n", src, dst)
+	// 	}
+	// }
 
 	pkgforbid.Dependencies = dependencies
 	pkgforbid.ConfigFile = flag.String("config", "pkgforbid.yaml", "config")
