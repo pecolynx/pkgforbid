@@ -21,3 +21,5 @@
 go.work
 
 pkgforbid
+
+coverage.txt
