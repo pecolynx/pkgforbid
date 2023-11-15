@@ -52,7 +52,7 @@ type appPackageConfig struct {
 
 type appConfig struct {
 	packageConfigs map[string]appPackageConfig
-	debug          bool `yaml:"debug"`
+	debug          bool
 }
 
 func loadConfig() (*appConfig, error) {
@@ -60,6 +60,7 @@ func loadConfig() (*appConfig, error) {
 	if ConfigFile != nil {
 		configFilePath = *ConfigFile
 	}
+
 	f, err := os.Open(configFilePath)
 	if err != nil {
 		return nil, err
@@ -102,8 +103,7 @@ func loadConfig() (*appConfig, error) {
 func run(pass *analysis.Pass) (interface{}, error) {
 	appConfig, err := loadConfig()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	if appConfig.debug {
@@ -137,16 +137,16 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	}
 
 	found := false
-
-	if packageConfig, ok := appConfig.packageConfigs[pass.Pkg.Path()]; ok {
-		found = true
-		_run(packageConfig, pass.Pkg.Path())
+	srcs := make([]string, 0)
+	srcs = append(srcs, pass.Pkg.Path())
+	if pass.Pkg.Name() == "main" {
+		srcs = append(srcs, pass.Pkg.Name())
 	}
 
-	if pass.Pkg.Name() == "main" {
-		if packageConfig, ok := appConfig.packageConfigs[pass.Pkg.Name()]; ok {
+	for _, src := range srcs {
+		if packageConfig, ok := appConfig.packageConfigs[src]; ok {
 			found = true
-			_run(packageConfig, pass.Pkg.Name())
+			_run(packageConfig, src)
 		}
 	}
 

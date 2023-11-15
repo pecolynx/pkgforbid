@@ -11,6 +11,11 @@ packageConfigs:
       - github.com/foo/bar/repository
   "a":
     forbiddenPackages:
-      # - time
+      - time
+      - json
+      - net/http
+  "b":
+    forbiddenPackages:
+      - fmt
       - json
 debug: true

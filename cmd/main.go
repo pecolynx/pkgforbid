@@ -58,14 +58,16 @@ func main() {
 
 	dependencyMap := make(map[string]map[string]bool)
 	for _, pkg := range pkgs {
-		dependencyMap[pkg.PkgPath] = make(map[string]bool)
-		for _, i := range pkg.Imports {
-			dependencyMap[pkg.PkgPath][i.PkgPath] = true
-		}
+		srcs := make([]string, 0)
+		srcs = append(srcs, pkg.PkgPath)
 		if pkg.Name == "main" {
-			dependencyMap[pkg.Name] = make(map[string]bool)
+			srcs = append(srcs, pkg.Name)
+		}
+
+		for _, src := range srcs {
+			dependencyMap[src] = make(map[string]bool)
 			for _, i := range pkg.Imports {
-				dependencyMap[pkg.Name][i.PkgPath] = true
+				dependencyMap[src][i.PkgPath] = true
 			}
 		}
 	}
@@ -76,24 +78,18 @@ func main() {
 			panic(err)
 		}
 	}
-	// for src, v := range dependencyList {
-	// 	for dst := range v {
-	// 		fmt.Printf("%s -> %s\n", src, dst)
-	// 	}
-	// }
 
 	dependencies := make(map[string]map[string]bool)
 	for _, pkg := range pkgs {
-		for _, i := range pkg.Imports {
-			path := fmt.Sprintf("%s,%s", pkg.PkgPath, i.PkgPath)
-			dependencies[path] = make(map[string]bool)
-			for dep := range dependencyList[i.PkgPath] {
-				dependencies[path][dep] = true
-			}
-		}
+		srcs := make([]string, 0)
+		srcs = append(srcs, pkg.PkgPath)
 		if pkg.Name == "main" {
+			srcs = append(srcs, pkg.Name)
+		}
+
+		for _, src := range srcs {
 			for _, i := range pkg.Imports {
-				path := fmt.Sprintf("%s,%s", pkg.Name, i.PkgPath)
+				path := fmt.Sprintf("%s,%s", src, i.PkgPath)
 				dependencies[path] = make(map[string]bool)
 				for dep := range dependencyList[i.PkgPath] {
 					dependencies[path][dep] = true
@@ -101,12 +97,6 @@ func main() {
 			}
 		}
 	}
-
-	// for src, v := range dependencies {
-	// 	for dst := range v {
-	// 		fmt.Printf("%s: %s\n", src, dst)
-	// 	}
-	// }
 
 	pkgforbid.Dependencies = dependencies
 	pkgforbid.ConfigFile = flag.String("config", "pkgforbid.yaml", "config")
